@@ -100,9 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. SUPABASE AUTH & SESSION MANAGEMENT
   // ==========================================
   async function initAuth() {
-    if (!window.supabaseClient) {
-      console.warn("Supabase client is not configured yet.");
-      showToast("Supabase configuration missing. Update app/supabase-config.js", "error");
+    if (!window.supabaseClient || !window.supabaseClient.auth) {
+      console.warn("Supabase client is not initialized.");
+      updateUserUI();
       return;
     }
 
@@ -126,6 +126,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function getAuthToken() {
+    if (window.supabaseClient && window.supabaseClient.auth) {
+      try {
+        const session = (await window.supabaseClient.auth.getSession())?.data?.session;
+        return session?.access_token || "";
+      } catch (e) {
+        console.warn("Could not retrieve session token:", e);
+      }
+    }
+    return "";
+  }
+
   function updateUserUI() {
     if (currentUser) {
       if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
@@ -139,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (authActionButton) {
     authActionButton.addEventListener("click", () => {
-      if (currentUser) {
+      if (currentUser && window.supabaseClient?.auth) {
         window.supabaseClient.auth.signOut();
         showToast("Signed out successfully", "success");
       } else {
@@ -327,11 +339,15 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const base64Audio = await window.AudioCapturer.readFileAsBase64(audioBlob);
 
-      const session = (await window.supabaseClient.auth.getSession())?.data?.session;
-      const accessToken = session?.access_token || "";
+      const accessToken = await getAuthToken();
+      const supabaseUrl = window.SUPABASE_URL || "";
+
+      if (!supabaseUrl || supabaseUrl.includes("your-project")) {
+        throw new Error("Supabase Project URL is not configured. Please update app/supabase-config.js with your project credentials.");
+      }
 
       // Step 1: Transcribe via Edge Function
-      const transcribeRes = await fetch(`${SUPABASE_URL}/functions/v1/transcribe-audio`, {
+      const transcribeRes = await fetch(`${supabaseUrl}/functions/v1/transcribe-audio`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -355,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const title = inputMeetingTitle.value.trim() || "Meeting";
       const attendees = inputMeetingAttendees.value.split(",").map(a => a.trim()).filter(Boolean);
 
-      const summarizeRes = await fetch(`${SUPABASE_URL}/functions/v1/summarize-meeting`, {
+      const summarizeRes = await fetch(`${supabaseUrl}/functions/v1/summarize-meeting`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -608,10 +624,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const docBlob = await window.DocExporter.generateWordDoc(meeting);
       const docBase64 = await window.DocExporter.blobToBase64(docBlob);
 
-      const session = (await window.supabaseClient.auth.getSession())?.data?.session;
-      const accessToken = session?.access_token || "";
+      const accessToken = await getAuthToken();
+      const supabaseUrl = window.SUPABASE_URL || "";
 
-      const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-meeting-report`, {
+      if (!supabaseUrl || supabaseUrl.includes("your-project")) {
+        throw new Error("Supabase Project URL is not configured. Please update app/supabase-config.js with your project credentials.");
+      }
+
+      const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-meeting-report`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
