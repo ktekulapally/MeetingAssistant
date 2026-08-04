@@ -664,18 +664,94 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 8. SETTINGS FORM HANDLER
   // ==========================================
+
+  function updateConnectionBadge() {
+    const badge = document.getElementById("supabaseConnectionBadge");
+    const banner = document.getElementById("supabaseSetupBanner");
+    if (!badge) return;
+    if (window.supabaseClient) {
+      badge.style.background = "rgba(16,185,129,0.15)";
+      badge.style.color = "#10b981";
+      badge.style.border = "1px solid rgba(16,185,129,0.3)";
+      badge.textContent = "✅ Connected";
+      if (banner) banner.style.display = "none";
+    } else {
+      badge.style.background = "rgba(244,63,94,0.15)";
+      badge.style.color = "#f43f5e";
+      badge.style.border = "1px solid rgba(244,63,94,0.3)";
+      badge.textContent = "⚡ Not Connected";
+      if (banner) banner.style.display = "block";
+    }
+  }
+
+  function loadSettingsIntoForm() {
+    const savedUrl = localStorage.getItem("ma_supabase_url") || "";
+    const savedKey = localStorage.getItem("ma_supabase_anon_key") || "";
+    const savedEmail = localStorage.getItem("meetingassistant_default_email") || "";
+
+    const urlInput = document.getElementById("settingSupabaseUrl");
+    const keyInput = document.getElementById("settingSupabaseAnonKey");
+    const emailInput = document.getElementById("settingDefaultEmail");
+
+    if (urlInput) urlInput.value = savedUrl;
+    if (keyInput) keyInput.value = savedKey;
+    if (emailInput) emailInput.value = savedEmail;
+  }
+
   const appSettingsForm = document.getElementById("appSettingsForm");
   if (appSettingsForm) {
     appSettingsForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const defaultEmail = document.getElementById("settingDefaultEmail").value.trim();
+
+      const urlInput = document.getElementById("settingSupabaseUrl");
+      const keyInput = document.getElementById("settingSupabaseAnonKey");
+      const emailInput = document.getElementById("settingDefaultEmail");
+
+      const supabaseUrl = urlInput ? urlInput.value.trim() : "";
+      const supabaseKey = keyInput ? keyInput.value.trim() : "";
+      const defaultEmail = emailInput ? emailInput.value.trim() : "";
+
+      if (!supabaseUrl || !supabaseUrl.startsWith("https://")) {
+        showToast("Please enter a valid Supabase Project URL starting with https://", "error");
+        return;
+      }
+      if (!supabaseKey || !supabaseKey.startsWith("eyJ")) {
+        showToast("Please enter a valid Supabase Anon Key (starts with eyJ...)", "error");
+        return;
+      }
+
+      // Save to localStorage
+      localStorage.setItem("ma_supabase_url", supabaseUrl);
+      localStorage.setItem("ma_supabase_anon_key", supabaseKey);
+
+      // Update window globals
+      window.SUPABASE_URL = supabaseUrl;
+      window.SUPABASE_ANON_KEY = supabaseKey;
+
+      // Reinitialize Supabase client LIVE without page reload
+      if (window.supabase) {
+        try {
+          window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+          showToast("✅ Supabase connected successfully! You can now Sign In and use all features.", "success");
+          updateConnectionBadge();
+          initAuth();
+        } catch (err) {
+          showToast(`Failed to connect Supabase: ${err.message}`, "error");
+          window.supabaseClient = null;
+          updateConnectionBadge();
+        }
+      }
+
       if (defaultEmail) {
         localStorage.setItem("meetingassistant_default_email", defaultEmail);
         if (inputRecipientEmail) inputRecipientEmail.value = defaultEmail;
-        showToast("Default recipient email saved!", "success");
       }
     });
   }
+
+  // Populate settings form from saved values on startup
+  loadSettingsIntoForm();
+  updateConnectionBadge();
 
   // Helper Utility
   function showToast(message, type = "success") {
