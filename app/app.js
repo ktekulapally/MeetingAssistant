@@ -333,32 +333,44 @@ document.addEventListener("DOMContentLoaded", () => {
   // 5. AI TRANSCRIPTION & SUMMARIZATION PIPELINE
   // ==========================================
   async function processAudioBlob(audioBlob, durationSeconds) {
-    updateAIStatus("🚀 Uploading audio & calling Groq Whisper Speech-to-Text API...");
+    updateAIStatus("🚀 Uploading audio to Groq Whisper Speech-to-Text API...");
     updateCaptureStatus("transcribing", "Transcribing...");
 
     try {
-      const base64Audio = await window.AudioCapturer.readFileAsBase64(audioBlob);
-
       const accessToken = await getAuthToken();
       const supabaseUrl = window.SUPABASE_URL || "";
 
-      if (!supabaseUrl || supabaseUrl.includes("your-project")) {
-        throw new Error("Supabase Project URL is not configured. Please update app/supabase-config.js with your project credentials.");
+      if (!supabaseUrl || !supabaseUrl.startsWith("https://")) {
+        throw new Error("Supabase not configured. Go to ⚙️ Settings tab → enter your Project URL and Anon Key → Save.");
       }
 
-      // Step 1: Transcribe via Edge Function
+      // Determine file extension from mimeType
+      const mimeType = audioBlob.type || "audio/webm";
+      let ext = "webm";
+      if (mimeType.includes("mp4") || mimeType.includes("m4a")) ext = "mp4";
+      else if (mimeType.includes("ogg")) ext = "ogg";
+      else if (mimeType.includes("wav")) ext = "wav";
+      else if (mimeType.includes("mpeg") || mimeType.includes("mp3")) ext = "mp3";
+
+      // Step 1: Send audio as multipart FormData (avoids base64 issues)
+      const formData = new FormData();
+      formData.append("file", audioBlob, `meeting_audio.${ext}`);
+
+      updateAIStatus(`🚀 Uploading ${(audioBlob.size / (1024*1024)).toFixed(1)} MB audio file to transcription API...`);
+
       const transcribeRes = await fetch(`${supabaseUrl}/functions/v1/transcribe-audio`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
+          // Do NOT set Content-Type — browser sets it automatically with boundary for FormData
         },
-        body: JSON.stringify({ audioBase64: base64Audio })
+        body: formData
       });
 
       if (!transcribeRes.ok) {
-        const errJson = await transcribeRes.json();
-        throw new Error(errJson.error || "Transcription failed");
+        let errMsg = "Transcription failed";
+        try { const errJson = await transcribeRes.json(); errMsg = errJson.error || errMsg; } catch {}
+        throw new Error(errMsg);
       }
 
       const transcribeData = await transcribeRes.json();
@@ -385,8 +397,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!summarizeRes.ok) {
-        const errJson = await summarizeRes.json();
-        throw new Error(errJson.error || "Summarization failed");
+        let errMsg = "Summarization failed";
+        try { const errJson = await summarizeRes.json(); errMsg = errJson.error || errMsg; } catch {}
+        throw new Error(errMsg);
       }
 
       const summaryData = await summarizeRes.json();
