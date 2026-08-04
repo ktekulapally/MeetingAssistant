@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetingAssistant 🎙️ AI Meeting Scribe & Summarizer</title>
+  <meta name="description" content="AI-powered meeting capture, transcription, summarization, Word/PDF document export, and automated email sharing tool.">
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- PWA Manifest & Web Icons -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+
+  <!-- External Libraries CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- App Header & Navigation Masthead -->
+  <header class="header-masthead">
+    <div class="masthead-container">
+      <a href="#" class="brand-logo">
+        <div class="brand-icon">🎙️</div>
+        <div class="brand-name">Meeting<span>Assistant</span></div>
+      </a>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" id="mainNavTabs">
+        <button class="tab-btn active" data-tab="tab-studio">
+          <span>🔴</span> Live Studio
+        </button>
+        <button class="tab-btn" data-tab="tab-history">
+          <span>📚</span> Meeting Minutes
+        </button>
+        <button class="tab-btn" data-tab="tab-integrations">
+          <span>🔌</span> Teams & Zoom Hub
+        </button>
+        <button class="tab-btn" data-tab="tab-settings">
+          <span>⚙️</span> Settings
+        </button>
+      </nav>
+
+      <!-- User Session Controls -->
+      <div class="user-profile-badge" id="userProfileArea">
+        <span class="user-email-tag" id="userEmailDisplay">Guest User</span>
+        <button class="btn-auth-action" id="authActionButton">Sign In</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="app-content">
+
+    <!-- TAB 1: Live Studio & Recording -->
+    <section class="tab-pane active" id="tab-studio">
+      <div class="grid-2col">
+        
+        <!-- Recording Controls Box -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <div class="glass-card-title">🎙️ Audio Capture Studio</div>
+            <span class="status-badge status-completed" id="captureStatusBadge">Ready</span>
+          </div>
+
+          <!-- Audio Source Selector -->
+          <div class="form-group">
+            <label class="form-label">Select Meeting Audio Source</label>
+            <div class="audio-source-selector">
+              <div class="source-card selected" data-source="speaker_mic" id="sourceMicCard">
+                <div class="source-icon">🔊</div>
+                <div class="source-name">Speaker / Mic</div>
+                <div class="source-desc">Room acoustics for Bluetooth or laptop speaker</div>
+              </div>
+              <div class="source-card" data-source="system_audio" id="sourceSystemCard">
+                <div class="source-icon">💻</div>
+                <div class="source-name">System Audio</div>
+                <div class="source-desc">Direct digital audio stream capture</div>
+              </div>
+              <div class="source-card" data-source="file_upload" id="sourceFileCard">
+                <div class="source-icon">📁</div>
+                <div class="source-name">File Upload</div>
+                <div class="source-desc">Upload MP3/WAV/M4A audio recording</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Upload Panel (Hidden by default unless File Upload selected) -->
+          <div id="fileUploadPanel" style="display: none;" class="form-group">
+            <label class="form-label">Upload Audio File</label>
+            <input type="file" id="audioFileInput" accept="audio/*,.mp3,.wav,.m4a,.webm" class="form-input">
+          </div>
+
+          <!-- Recording Studio Monitor -->
+          <div class="recording-monitor-box">
+            <div style="font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Meeting Elapsed Time</div>
+            <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+            <!-- Waveform Bar Animations -->
+            <div class="live-waveform-bar-container" id="waveformContainer">
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+              <div class="waveform-bar"></div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="recording-controls">
+            <button class="btn-record" id="btnStartRecord">
+              <span>🔴</span> Start Meeting Capture
+            </button>
+            <button class="btn-secondary" id="btnPauseRecord" style="display: none;">
+              <span>⏸️</span> Pause
+            </button>
+            <button class="btn-secondary" id="btnStopRecord" style="display: none; border-color: var(--accent-rose); color: var(--accent-rose);">
+              <span>⏹️</span> Finish & Transcribe
+            </button>
+          </div>
+        </div>
+
+        <!-- Meeting Details & Live Summary Box -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <div class="glass-card-title">📝 Meeting Information & Settings</div>
+          </div>
+
+          <form id="meetingSetupForm">
+            <div class="form-group">
+              <label class="form-label">Meeting Title / Topic</label>
+              <input type="text" id="inputMeetingTitle" class="form-input" placeholder="e.g. Q3 Product Roadmap Sync" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Attendees (comma separated)</label>
+              <input type="text" id="inputMeetingAttendees" class="form-input" placeholder="e.g. Alex, Sarah, David">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Default Email for Reports</label>
+              <input type="email" id="inputRecipientEmail" class="form-input" placeholder="e.g. manager@company.com">
+            </div>
+          </form>
+
+          <!-- Transcription & AI Processing Monitor -->
+          <div style="margin-top: 24px;">
+            <div class="glass-card-title" style="font-size: 15px; margin-bottom: 12px;">⚡ Live Transcription & AI Status</div>
+            <div id="aiStatusBox" style="background: var(--bg-primary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); min-height: 120px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+              Ready to record. Click "Start Meeting Capture" or upload an audio file to generate instant transcripts and structured summaries.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: Meeting Minutes & History -->
+    <section class="tab-pane" id="tab-history">
+      <div class="glass-card">
+        <div class="glass-card-header">
+          <div class="glass-card-title">📚 Saved Meeting Minutes & Transcripts</div>
+          <button class="btn-secondary" id="btnRefreshHistory"><span>🔄</span> Refresh</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Meeting Title</th>
+                <th>Date</th>
+                <th>Source</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="meetingHistoryTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  Loading meetings...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: Teams & Zoom Extensibility Hub -->
+    <section class="tab-pane" id="tab-integrations">
+      <div class="glass-card">
+        <div class="glass-card-header">
+          <div class="glass-card-title">🔌 Teams & Zoom Call Integration Hub</div>
+          <span class="status-badge status-transcribing">Extensible Ready</span>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.6;">
+          MeetingAssistant is engineered with a modular <code>AudioStreamAdapter</code> architecture. You can connect Microsoft Teams Calls and Zoom Meetings directly using web audio stream webhooks or meeting bot agents.
+        </p>
+
+        <div class="grid-2col">
+          <div style="background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <span style="font-size: 28px;">🔷</span>
+              <div>
+                <strong style="font-size: 16px;">Microsoft Teams Integration</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Teams Calling Webhook & Bot Stream</div>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+              Capture audio streams from Microsoft Teams calls using the Teams Graph API Communications Bot adapter.
+            </p>
+            <div class="form-group">
+              <label class="form-label">Teams Bot Endpoint URL</label>
+              <input type="text" class="form-input" value="https://your-teams-bot.azurewebsites.net/api/calls" readonly>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <span style="font-size: 28px;">📹</span>
+              <div>
+                <strong style="font-size: 16px;">Zoom Meeting Integration</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Zoom Web SDK Audio Stream</div>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+              Stream raw Zoom meeting audio into MeetingAssistant using the Zoom Web Client SDK adapter.
+            </p>
+            <div class="form-group">
+              <label class="form-label">Zoom SDK Client ID</label>
+              <input type="text" class="form-input" placeholder="Enter Zoom Client ID">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: Settings -->
+    <section class="tab-pane" id="tab-settings">
+      <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+        <div class="glass-card-header">
+          <div class="glass-card-title">⚙️ App Settings & Configuration</div>
+        </div>
+
+        <form id="appSettingsForm">
+          <div class="form-group">
+            <label class="form-label">Default Recipient Email for Reports</label>
+            <input type="email" id="settingDefaultEmail" class="form-input" placeholder="your-email@example.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Transcription Engine</label>
+            <select class="form-select" disabled>
+              <option selected>Groq Whisper API (whisper-large-v3)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">AI Summarization Model</label>
+            <select class="form-select" disabled>
+              <option selected>Groq Llama 3.3 70B (llama-3.3-70b-versatile)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 16px;">
+            Save Settings
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MEETING MINUTES DETAIL MODAL -->
+  <div class="modal-backdrop" id="meetingDetailModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div>
+          <h2 id="modalMeetingTitle" style="font-family: var(--font-heading); font-size: 20px;">Meeting Title</h2>
+          <div id="modalMeetingDate" style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Date</div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseDetailModal">&times;</button>
+      </div>
+
+      <!-- Action Buttons Toolbar -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button class="btn-secondary" id="btnExportWord"><span>📄</span> Export Word (.docx)</button>
+        <button class="btn-secondary" id="btnExportPdf"><span>📕</span> Export PDF (.pdf)</button>
+        <button class="btn-primary" id="btnSendEmailReport"><span>✉️</span> Email Meeting Report</button>
+      </div>
+
+      <!-- Executive Summary Box -->
+      <div class="form-group">
+        <label class="form-label" style="color: var(--accent-cyan);">📌 Executive Summary</label>
+        <div id="modalSummaryBox" style="background: var(--bg-primary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); line-height: 1.6; font-size: 14px;"></div>
+      </div>
+
+      <!-- Key Takeaways -->
+      <div class="form-group">
+        <label class="form-label" style="color: var(--accent-emerald);">💡 Key Takeaways & Decisions</label>
+        <div id="modalTakeawaysBox" style="background: var(--bg-primary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);"></div>
+      </div>
+
+      <!-- Action Points Table -->
+      <div class="form-group">
+        <label class="form-label" style="color: var(--primary);">✅ Action Items & Deliverables</label>
+        <div id="modalActionPointsBox" style="background: var(--bg-primary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);"></div>
+      </div>
+
+      <!-- Full Transcript -->
+      <div class="form-group">
+        <label class="form-label" style="color: var(--text-muted);">🗣️ Full Meeting Transcript</label>
+        <div id="modalTranscriptBox" style="background: var(--bg-primary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); max-height: 200px; overflow-y: auto; font-size: 13px; font-family: var(--font-mono); color: var(--text-muted); white-space: pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-window" style="max-width: 420px;">
+      <div class="modal-header">
+        <h2 id="authModalTitle" style="font-family: var(--font-heading); font-size: 20px;">Sign In to MeetingAssistant</h2>
+        <button class="btn-close-modal" id="btnCloseAuthModal">&times;</button>
+      </div>
+
+      <form id="authForm">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="authEmail" class="form-input" required placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="authPassword" class="form-input" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary" id="btnSubmitAuth" style="width: 100%; justify-content: center; margin-top: 12px;">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- App JavaScript Modules -->
+  <script src="supabase-config.js"></script>
+  <script src="session-guard.js"></script>
+  <script src="audio-capturer.js"></script>
+  <script src="doc-exporter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
