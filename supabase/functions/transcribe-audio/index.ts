@@ -52,9 +52,10 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const mimeMatch = body.audioBase64.match(/^data:(audio\/[a-zA-Z0-9]+);base64,/);
+      const parts = body.audioBase64.split(",");
+      const base64Data = parts[1] || parts[0];
+      const mimeMatch = parts[0].match(/:(.*?);/);
       const mimeType = mimeMatch ? mimeMatch[1] : "audio/webm";
-      const base64Data = body.audioBase64.replace(/^data:audio\/[a-zA-Z0-9]+;base64,/, "");
 
       const binaryStr = atob(base64Data);
       const len = binaryStr.length;
