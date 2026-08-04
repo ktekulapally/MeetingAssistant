@@ -162,6 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = authEmail.value.trim();
       const password = authPassword.value.trim();
 
+      if (!window.supabaseClient || !window.supabaseClient.auth) {
+        showToast("Supabase client is not initialized. Check app/supabase-config.js credentials.", "error");
+        return;
+      }
+
       try {
         let { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
