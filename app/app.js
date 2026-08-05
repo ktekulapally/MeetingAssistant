@@ -12,6 +12,54 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentRecordingDuration = 0;
   let userMeetingsList = [];
 
+  // Background recording wake lock and silent audio player variables
+  let silentAudioElement = null;
+  let wakeLock = null;
+
+  function startSilentAudio() {
+    try {
+      if (!silentAudioElement) {
+        // Base64 WAV silence block (1 second loop)
+        silentAudioElement = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
+        silentAudioElement.loop = true;
+      }
+      silentAudioElement.play().catch((err) => {
+        console.warn("Silent audio background playback was blocked by browser:", err);
+      });
+    } catch (e) {
+      console.warn("Could not create silent audio playback:", e);
+    }
+  }
+
+  function stopSilentAudio() {
+    if (silentAudioElement) {
+      try {
+        silentAudioElement.pause();
+      } catch (e) {}
+    }
+  }
+
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log("Wake Lock acquired successfully.");
+      }
+    } catch (err) {
+      console.warn("Failed to acquire Screen Wake Lock:", err);
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) {
+      try {
+        wakeLock.release();
+        wakeLock = null;
+        console.log("Wake Lock released.");
+      } catch (e) {}
+    }
+  }
+
   // DOM Elements
   const mainNavTabs = document.getElementById("mainNavTabs");
   const tabPanes = document.querySelectorAll(".tab-pane");
@@ -242,6 +290,10 @@ document.addEventListener("DOMContentLoaded", () => {
         btnPauseRecord.style.display = "inline-flex";
         btnStopRecord.style.display = "inline-flex";
 
+        // Trigger silent audio loop and request wake lock to run in background on mobile
+        startSilentAudio();
+        await requestWakeLock();
+
         await activeAudioCapturer.startRecording(selectedAudioSource, {
           onTick: (elapsedSeconds) => {
             currentRecordingDuration = elapsedSeconds;
@@ -255,6 +307,8 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Meeting recording started!", "success");
       } catch (err) {
         console.error("Recording error:", err);
+        stopSilentAudio();
+        releaseWakeLock();
         updateCaptureStatus("completed", "Ready");
         showToast(err.message || "Failed to start recording", "error");
         resetRecordButtons();
@@ -284,12 +338,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         updateCaptureStatus("transcribing", "Finalizing Recording...");
+        // Stop background silent playback and wake lock
+        stopSilentAudio();
+        releaseWakeLock();
         const result = await activeAudioCapturer.stopRecording();
         resetRecordButtons();
 
         await processAudioBlob(result.blob, result.durationSeconds);
       } catch (err) {
         console.error("Stop recording error:", err);
+        stopSilentAudio();
+        releaseWakeLock();
         showToast(err.message || "Failed to stop recording", "error");
         resetRecordButtons();
         updateCaptureStatus("completed", "Ready");
@@ -443,11 +502,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Automatically open detail modal
       openMeetingDetailModal(currentMeeting);
-
-      // Auto-send email if recipient email provided
-      if (recipientEmail) {
-        await sendEmailReport(currentMeeting, recipientEmail);
-      }
 
     } catch (err) {
       console.error("AI Pipeline error:", err);

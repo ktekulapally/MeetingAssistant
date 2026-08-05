@@ -1,6 +1,6 @@
 {
-  "name": "MeetingAssistant AI Scribe",
-  "short_name": "MeetingAssistant",
+  "name": "CultivAlte Meeting Assistant",
+  "short_name": "CultivAlte",
   "description": "AI-Powered Meeting Capture, Live Transcription, Automated Summarization, Word/PDF Document Generation & Email Distribution Tool",
   "start_url": "index.html",
   "display": "standalone",
@@ -8,9 +8,9 @@
   "theme_color": "#0b0f19",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>",
+      "src": "cultivalte_logo.png",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }
