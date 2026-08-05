@@ -698,8 +698,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadSettingsIntoForm() {
-    const savedUrl = localStorage.getItem("ma_supabase_url") || "";
-    const savedKey = localStorage.getItem("ma_supabase_anon_key") || "";
+    const savedUrl = localStorage.getItem("ma_supabase_url") || window.SUPABASE_URL || "";
+    const savedKey = localStorage.getItem("ma_supabase_anon_key") || window.SUPABASE_ANON_KEY || "";
     const savedEmail = localStorage.getItem("meetingassistant_default_email") || "";
 
     const urlInput = document.getElementById("settingSupabaseUrl");

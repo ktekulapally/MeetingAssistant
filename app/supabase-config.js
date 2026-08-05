@@ -1,17 +1,16 @@
 // ================================================================
 // MeetingAssistant - Supabase Runtime Configuration
 // ================================================================
-// Credentials are loaded from:
-//   1. Browser localStorage (set via the Settings tab in the app UI)
-//   2. Fallback: these hardcoded defaults below (if not yet saved)
-// You do NOT need to edit this file manually.
-// Instead, open the app → Settings tab → enter your credentials → Save.
+// Hardcode your actual Supabase URL and Anon Key here to share them
+// across all your devices automatically (similar to Expense-tracker):
 // ================================================================
+const HARDCODED_URL = "https://zmklfmlppceiulaybjga.supabase.co";
+const HARDCODED_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpta2xmbWxwcGNlaXVsYXliamdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDE3MTQsImV4cCI6MjA5ODU3NzcxNH0.XIQPpuEE1QeEcdbubDxd28hfB4dhMbmNy0QIYWkzrGg";
 
 (function initSupabase() {
-  // Try to load saved credentials from browser localStorage first
-  const savedUrl = localStorage.getItem("ma_supabase_url") || "";
-  const savedKey = localStorage.getItem("ma_supabase_anon_key") || "";
+  // Use saved credentials from browser localStorage, or fallback to the hardcoded credentials
+  const savedUrl = localStorage.getItem("ma_supabase_url") || HARDCODED_URL;
+  const savedKey = localStorage.getItem("ma_supabase_anon_key") || HARDCODED_KEY;
 
   window.SUPABASE_URL = savedUrl || "";
   window.SUPABASE_ANON_KEY = savedKey || "";
