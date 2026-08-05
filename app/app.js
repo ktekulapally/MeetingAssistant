@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (authActionButton) authActionButton.textContent = "Sign Out";
       if (!inputRecipientEmail.value) inputRecipientEmail.value = currentUser.email;
     } else {
-      if (userEmailDisplay) userEmailDisplay.textContent = "Guest User (Demo)";
+      if (userEmailDisplay) userEmailDisplay.textContent = "Guest User";
       if (authActionButton) authActionButton.textContent = "Sign In";
     }
   }
@@ -376,11 +376,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return [hrs, mins, secs].map(v => v < 10 ? `0${v}` : v).join(":");
   }
 
-  function animateWaveformBars(level) {
+  function animateWaveformBars(frequencies) {
     waveformBars.forEach((bar, idx) => {
-      const height = Math.max(8, Math.min(48, Math.round((level / 100) * 48 * (0.5 + Math.sin(idx)))));
+      let val = 0;
+      if (Array.isArray(frequencies)) {
+        val = frequencies[idx] || 0; // Value from 0 to 255
+      } else {
+        val = frequencies || 0; // Fallback to single level number
+      }
+      
+      // Scale frequency value (0-255) to bar height (8px to 48px)
+      const height = Math.max(8, Math.min(48, Math.round((val / 255) * 40) + 8));
       bar.style.height = `${height}px`;
-      if (level > 10) {
+      if (val > 10) {
         bar.classList.add("active");
       } else {
         bar.classList.remove("active");
@@ -752,6 +760,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedEmail = localStorage.getItem("meetingassistant_default_email") || "";
     const emailInput = document.getElementById("settingDefaultEmail");
     if (emailInput) emailInput.value = savedEmail;
+
+    const savedProvider = localStorage.getItem("ma_ai_provider") || "groq";
+    const savedKey = localStorage.getItem("ma_ai_api_key") || "";
+    const savedModel = localStorage.getItem("ma_ai_model") || "llama-3.3-70b-versatile";
+
+    const providerSelect = document.getElementById("settingActiveProvider");
+    const keyInput = document.getElementById("settingCustomApiKey");
+    const keyGroup = document.getElementById("customApiKeyGroup");
+    const modelSelect = document.getElementById("settingActiveModel");
+
+    if (providerSelect) {
+      providerSelect.value = savedProvider;
+      providerSelect.addEventListener("change", () => {
+        const provider = providerSelect.value;
+        if (keyGroup) {
+          keyGroup.style.display = provider === "groq" ? "none" : "block";
+        }
+        
+        // Populate appropriate model options
+        if (modelSelect) {
+          modelSelect.innerHTML = "";
+          if (provider === "groq") {
+            modelSelect.innerHTML = `<option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (Groq)</option>`;
+          } else if (provider === "openai") {
+            modelSelect.innerHTML = `
+              <option value="gpt-4o" selected>GPT-4o (OpenAI)</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            `;
+          } else if (provider === "anthropic") {
+            modelSelect.innerHTML = `
+              <option value="claude-3-5-sonnet-20241022" selected>Claude 3.5 Sonnet (Anthropic)</option>
+              <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+            `;
+          }
+        }
+      });
+      // Trigger toggle logic once on load
+      providerSelect.dispatchEvent(new Event("change"));
+    }
+
+    if (keyInput) keyInput.value = savedKey;
+    if (modelSelect) modelSelect.value = savedModel;
   }
 
   const appSettingsForm = document.getElementById("appSettingsForm");
@@ -762,11 +812,24 @@ document.addEventListener("DOMContentLoaded", () => {
       const emailInput = document.getElementById("settingDefaultEmail");
       const defaultEmail = emailInput ? emailInput.value.trim() : "";
 
+      const providerSelect = document.getElementById("settingActiveProvider");
+      const keyInput = document.getElementById("settingCustomApiKey");
+      const modelSelect = document.getElementById("settingActiveModel");
+
+      const provider = providerSelect ? providerSelect.value : "groq";
+      const customKey = keyInput ? keyInput.value.trim() : "";
+      const model = modelSelect ? modelSelect.value : "llama-3.3-70b-versatile";
+
+      localStorage.setItem("ma_ai_provider", provider);
+      localStorage.setItem("ma_ai_api_key", customKey);
+      localStorage.setItem("ma_ai_model", model);
+
       if (defaultEmail) {
         localStorage.setItem("meetingassistant_default_email", defaultEmail);
         if (inputRecipientEmail) inputRecipientEmail.value = defaultEmail;
-        showToast("Settings saved successfully!", "success");
       }
+      
+      showToast("Settings and AI connections saved successfully!", "success");
     });
   }
 

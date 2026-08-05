@@ -279,13 +279,16 @@ class AudioCapturer {
     const updateWaveform = () => {
       if (!this.isRecording) return;
       this.analyser.getByteFrequencyData(dataArray);
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i];
+      
+      // Distribute frequency bins evenly across the 10 visualizer bars
+      const binCount = this.analyser.frequencyBinCount;
+      const step = Math.max(1, Math.floor(binCount / 10));
+      const frequencies = [];
+      for (let i = 0; i < 10; i++) {
+        frequencies.push(dataArray[i * step] || 0);
       }
-      const average = sum / dataArray.length;
-      const normalizedLevel = Math.min(100, Math.round((average / 128) * 100));
-      this.onWaveformCallback(normalizedLevel);
+      
+      this.onWaveformCallback(frequencies);
 
       if (this.isRecording && !this.isPaused) {
         requestAnimationFrame(updateWaveform);
