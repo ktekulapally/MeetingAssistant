@@ -24,6 +24,7 @@ class MicSpeakerAdapter extends AudioStreamAdapter {
 
   async initialize() {
     try {
+      // Try with optimal constraints first
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -35,8 +36,18 @@ class MicSpeakerAdapter extends AudioStreamAdapter {
       });
       return this.stream;
     } catch (err) {
-      console.error("MicSpeakerAdapter failed to access microphone:", err);
-      throw new Error("Could not access microphone/speaker acoustics. Please check browser permissions.");
+      console.warn("Optimal microphone access failed, retrying with basic constraints...", err);
+      try {
+        // Fallback retry using bare minimum audio constraints
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false
+        });
+        return this.stream;
+      } catch (retryErr) {
+        console.error("MicSpeakerAdapter failed to access microphone completely:", retryErr);
+        throw new Error("Could not access microphone/speaker acoustics. Please check browser permissions, verify your microphone is plugged in, and ensure it is not used by another app.");
+      }
     }
   }
 
