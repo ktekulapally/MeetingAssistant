@@ -12,6 +12,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 
+import android.webkit.WebSettings
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
@@ -48,6 +50,10 @@ class MainActivity : AppCompatActivity() {
         settings.mediaPlaybackRequiresUserGesture = false
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
+
+        // Disable cache to ensure local WebView fetches updates instantly on launch
+        settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView.clearCache(true)
 
         // Keep page navigation inside our app WebView
         webView.webViewClient = object : WebViewClient() {
