@@ -118,17 +118,87 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   if (mainNavTabs) {
     mainNavTabs.addEventListener("click", (e) => {
-      // 1. Handle clicking a standard tab or settings icon tab
-      const tabBtn = e.target.closest(".tab-btn:not(.dropdown-toggle)");
-      if (tabBtn) {
-        const targetTabId = tabBtn.getAttribute("data-tab");
+      const studioDropdownToggle = document.getElementById("studioDropdownToggle");
+      const studioDropdownContainer = document.getElementById("studioDropdownContainer");
 
-        // Clear all active states
+      // 1. Handle clicking the dropdown toggle button itself (Live Studio tab)
+      const dropdownToggle = e.target.closest("#studioDropdownToggle");
+      if (dropdownToggle) {
+        e.stopPropagation();
+
+        // Switch to the currently selected dropdown item's pane if studio tab is not active
+        const isStudioActive = dropdownToggle.classList.contains("active");
+        if (!isStudioActive) {
+          const activeItem = studioDropdownContainer.querySelector(".tab-dropdown-item.active") || 
+                             studioDropdownContainer.querySelector(".tab-dropdown-item");
+          if (activeItem) {
+            const targetTabId = activeItem.getAttribute("data-tab");
+
+            // Reset all active states
+            document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+            document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
+            tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+            // Set active states
+            activeItem.classList.add("active");
+            dropdownToggle.classList.add("active");
+            const targetPane = document.getElementById(targetTabId);
+            if (targetPane) targetPane.classList.add("active");
+          }
+        }
+
+        // Toggle the dropdown menu open state
+        if (studioDropdownContainer) {
+          studioDropdownContainer.classList.toggle("open");
+        }
+        return;
+      }
+
+      // 2. Handle clicking a dropdown menu item
+      const dropdownItem = e.target.closest(".tab-dropdown-item");
+      if (dropdownItem) {
+        const targetTabId = dropdownItem.getAttribute("data-tab");
+        const labelText = dropdownItem.getAttribute("data-label");
+        const iconSpan = dropdownItem.querySelector("span").cloneNode(true);
+
+        // Reset all active states
         document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
         document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
         tabPanes.forEach((pane) => pane.classList.remove("active"));
 
-        // Activate clicked tab
+        // Set active states
+        dropdownItem.classList.add("active");
+        const toggleBtn = document.getElementById("studioDropdownToggle");
+        const labelEl = document.getElementById("studioTabLabel");
+        if (toggleBtn) toggleBtn.classList.add("active");
+        
+        if (labelEl && toggleBtn) {
+          labelEl.textContent = labelText;
+          const toggleIcon = toggleBtn.querySelector("span");
+          if (toggleIcon) toggleBtn.replaceChild(iconSpan, toggleIcon);
+        }
+
+        const targetPane = document.getElementById(targetTabId);
+        if (targetPane) targetPane.classList.add("active");
+
+        // Close menu
+        if (studioDropdownContainer) {
+          studioDropdownContainer.classList.remove("open");
+        }
+        return;
+      }
+
+      // 3. Handle clicking a standard tab or settings icon tab
+      const tabBtn = e.target.closest(".tab-btn");
+      if (tabBtn) {
+        const targetTabId = tabBtn.getAttribute("data-tab");
+
+        // Reset all active states
+        document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
+        tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+        // Set active states
         tabBtn.classList.add("active");
         const targetPane = document.getElementById(targetTabId);
         if (targetPane) targetPane.classList.add("active");
@@ -136,78 +206,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (targetTabId === "tab-history") {
           fetchMeetingHistory();
         }
-        return;
-      }
-
-      // 2. Handle clicking a dropdown menu item under Live Studio
-      const dropdownItem = e.target.closest(".tab-dropdown-item");
-      if (dropdownItem) {
-        const targetTabId = dropdownItem.getAttribute("data-tab");
-        const labelText = dropdownItem.getAttribute("data-label");
-        const iconSpan = dropdownItem.querySelector("span").cloneNode(true);
-
-        // Clear all active states
-        document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
-        document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
-        tabPanes.forEach((pane) => pane.classList.remove("active"));
-
-        // Activate dropdown item and parent toggle button
-        dropdownItem.classList.add("active");
-        const studioDropdownToggle = document.getElementById("studioDropdownToggle");
-        const studioTabLabel = document.getElementById("studioTabLabel");
-        if (studioDropdownToggle) studioDropdownToggle.classList.add("active");
         
-        if (studioTabLabel && studioDropdownToggle) {
-          studioTabLabel.textContent = labelText;
-          const toggleIcon = studioDropdownToggle.querySelector("span");
-          if (toggleIcon) studioDropdownToggle.replaceChild(iconSpan, toggleIcon);
-        }
-
-        const targetPane = document.getElementById(targetTabId);
-        if (targetPane) targetPane.classList.add("active");
-
-        // Close dropdown menu manually on click
-        const studioDropdownContainer = document.getElementById("studioDropdownContainer");
-        if (studioDropdownContainer) studioDropdownContainer.classList.remove("open");
-      }
-    });
-  }
-
-  // Toggle open class and activate current studio sub-tab when clicking the dropdown button
-  const studioDropdownToggle = document.getElementById("studioDropdownToggle");
-  const studioDropdownContainer = document.getElementById("studioDropdownContainer");
-  if (studioDropdownToggle && studioDropdownContainer) {
-    studioDropdownToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-
-      // If studio tab is not active, navigate to the currently selected dropdown item's tab pane
-      const isStudioActive = studioDropdownToggle.classList.contains("active");
-      if (!isStudioActive) {
-        const activeItem = studioDropdownContainer.querySelector(".tab-dropdown-item.active") || 
-                           studioDropdownContainer.querySelector(".tab-dropdown-item");
-        if (activeItem) {
-          const targetTabId = activeItem.getAttribute("data-tab");
-
-          // Clear all active states
-          document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
-          document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
-          tabPanes.forEach((pane) => pane.classList.remove("active"));
-
-          // Activate this item & the main toggle button
-          activeItem.classList.add("active");
-          studioDropdownToggle.classList.add("active");
-
-          const targetPane = document.getElementById(targetTabId);
-          if (targetPane) targetPane.classList.add("active");
+        // Close studio dropdown menu
+        if (studioDropdownContainer) {
+          studioDropdownContainer.classList.remove("open");
         }
       }
-
-      studioDropdownContainer.classList.toggle("open");
     });
   }
 
   // Dismiss dropdown when clicking elsewhere
   window.addEventListener("click", () => {
+    const studioDropdownContainer = document.getElementById("studioDropdownContainer");
     if (studioDropdownContainer) {
       studioDropdownContainer.classList.remove("open");
     }
