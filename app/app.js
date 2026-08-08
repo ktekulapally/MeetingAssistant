@@ -173,12 +173,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Toggle open class on clicking the dropdown button
+  // Toggle open class and activate current studio sub-tab when clicking the dropdown button
   const studioDropdownToggle = document.getElementById("studioDropdownToggle");
   const studioDropdownContainer = document.getElementById("studioDropdownContainer");
   if (studioDropdownToggle && studioDropdownContainer) {
     studioDropdownToggle.addEventListener("click", (e) => {
       e.stopPropagation();
+
+      // If studio tab is not active, navigate to the currently selected dropdown item's tab pane
+      const isStudioActive = studioDropdownToggle.classList.contains("active");
+      if (!isStudioActive) {
+        const activeItem = studioDropdownContainer.querySelector(".tab-dropdown-item.active") || 
+                           studioDropdownContainer.querySelector(".tab-dropdown-item");
+        if (activeItem) {
+          const targetTabId = activeItem.getAttribute("data-tab");
+
+          // Clear all active states
+          document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+          document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
+          tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+          // Activate this item & the main toggle button
+          activeItem.classList.add("active");
+          studioDropdownToggle.classList.add("active");
+
+          const targetPane = document.getElementById(targetTabId);
+          if (targetPane) targetPane.classList.add("active");
+        }
+      }
+
       studioDropdownContainer.classList.toggle("open");
     });
   }
