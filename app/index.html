@@ -30,17 +30,28 @@
 
       <!-- Navigation Tabs -->
       <nav class="nav-tabs" id="mainNavTabs">
-        <button class="tab-btn active" data-tab="tab-studio">
-          <span>🔴</span> Live Studio
-        </button>
+        <!-- Live Studio Dropdown tab grouping Teams & Zoom Hub -->
+        <div class="tab-dropdown" id="studioDropdownContainer">
+          <button class="tab-btn active dropdown-toggle" id="studioDropdownToggle">
+            <span>🔴</span> <span id="studioTabLabel">Live Studio</span> <span class="caret">▼</span>
+          </button>
+          <div class="tab-dropdown-menu">
+            <div class="tab-dropdown-item active" data-tab="tab-studio" data-label="Live Studio">
+              <span>🔴</span> Live Studio
+            </div>
+            <div class="tab-dropdown-item" data-tab="tab-integrations" data-label="Teams & Zoom Hub">
+              <span>🔌</span> Teams & Zoom Hub
+            </div>
+          </div>
+        </div>
+
         <button class="tab-btn" data-tab="tab-history">
           <span>📚</span> Meeting Minutes
         </button>
-        <button class="tab-btn" data-tab="tab-integrations">
-          <span>🔌</span> Teams & Zoom Hub
-        </button>
-        <button class="tab-btn" data-tab="tab-settings">
-          <span>⚙️</span> Settings
+
+        <!-- Icon-only Settings tab -->
+        <button class="tab-btn settings-icon-btn" data-tab="tab-settings" title="Settings">
+          <span>⚙️</span>
         </button>
       </nav>
 
@@ -75,15 +86,14 @@
                 <div class="source-name">Speaker / Mic</div>
                 <div class="source-desc">Room acoustics for Bluetooth or laptop speaker</div>
               </div>
-              <div class="source-card" data-source="system_audio" id="sourceSystemCard">
-                <div class="source-icon">💻</div>
-                <div class="source-name">System Audio</div>
-                <div class="source-desc">Direct digital audio stream capture</div>
-              </div>
-              <div class="source-card" data-source="file_upload" id="sourceFileCard">
+              <div class="source-dropdown-card" id="sourceDropdownCard">
                 <div class="source-icon">📁</div>
-                <div class="source-name">File Upload</div>
-                <div class="source-desc">Upload MP3/WAV/M4A audio recording</div>
+                <div class="source-name" style="font-weight: 700; margin-bottom: 2px;">Digital / File Sources</div>
+                <select id="audioSourceDropdown" class="source-select">
+                  <option value="" disabled selected>Select Source...</option>
+                  <option value="system_audio">💻 System Audio (Direct Capture)</option>
+                  <option value="file_upload">📤 File Upload (MP3/WAV/M4A)</option>
+                </select>
               </div>
             </div>
           </div>

@@ -69,8 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Studio Elements
   const sourceMicCard = document.getElementById("sourceMicCard");
-  const sourceSystemCard = document.getElementById("sourceSystemCard");
-  const sourceFileCard = document.getElementById("sourceFileCard");
+  const sourceDropdownCard = document.getElementById("sourceDropdownCard");
+  const audioSourceDropdown = document.getElementById("audioSourceDropdown");
   const fileUploadPanel = document.getElementById("fileUploadPanel");
   const audioFileInput = document.getElementById("audioFileInput");
 
@@ -118,23 +118,77 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   if (mainNavTabs) {
     mainNavTabs.addEventListener("click", (e) => {
-      const tabBtn = e.target.closest(".tab-btn");
-      if (!tabBtn) return;
+      // 1. Handle clicking a standard tab or settings icon tab
+      const tabBtn = e.target.closest(".tab-btn:not(.dropdown-toggle)");
+      if (tabBtn) {
+        const targetTabId = tabBtn.getAttribute("data-tab");
 
-      const targetTabId = tabBtn.getAttribute("data-tab");
+        // Clear all active states
+        document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
+        tabPanes.forEach((pane) => pane.classList.remove("active"));
 
-      document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
-      tabPanes.forEach((pane) => pane.classList.remove("active"));
+        // Activate clicked tab
+        tabBtn.classList.add("active");
+        const targetPane = document.getElementById(targetTabId);
+        if (targetPane) targetPane.classList.add("active");
 
-      tabBtn.classList.add("active");
-      const targetPane = document.getElementById(targetTabId);
-      if (targetPane) targetPane.classList.add("active");
+        if (targetTabId === "tab-history") {
+          fetchMeetingHistory();
+        }
+        return;
+      }
 
-      if (targetTabId === "tab-history") {
-        fetchMeetingHistory();
+      // 2. Handle clicking a dropdown menu item under Live Studio
+      const dropdownItem = e.target.closest(".tab-dropdown-item");
+      if (dropdownItem) {
+        const targetTabId = dropdownItem.getAttribute("data-tab");
+        const labelText = dropdownItem.getAttribute("data-label");
+        const iconSpan = dropdownItem.querySelector("span").cloneNode(true);
+
+        // Clear all active states
+        document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
+        tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+        // Activate dropdown item and parent toggle button
+        dropdownItem.classList.add("active");
+        const studioDropdownToggle = document.getElementById("studioDropdownToggle");
+        const studioTabLabel = document.getElementById("studioTabLabel");
+        if (studioDropdownToggle) studioDropdownToggle.classList.add("active");
+        
+        if (studioTabLabel && studioDropdownToggle) {
+          studioTabLabel.textContent = labelText;
+          const toggleIcon = studioDropdownToggle.querySelector("span");
+          if (toggleIcon) studioDropdownToggle.replaceChild(iconSpan, toggleIcon);
+        }
+
+        const targetPane = document.getElementById(targetTabId);
+        if (targetPane) targetPane.classList.add("active");
+
+        // Close dropdown menu manually on click
+        const studioDropdownContainer = document.getElementById("studioDropdownContainer");
+        if (studioDropdownContainer) studioDropdownContainer.classList.remove("open");
       }
     });
   }
+
+  // Toggle open class on clicking the dropdown button
+  const studioDropdownToggle = document.getElementById("studioDropdownToggle");
+  const studioDropdownContainer = document.getElementById("studioDropdownContainer");
+  if (studioDropdownToggle && studioDropdownContainer) {
+    studioDropdownToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      studioDropdownContainer.classList.toggle("open");
+    });
+  }
+
+  // Dismiss dropdown when clicking elsewhere
+  window.addEventListener("click", () => {
+    if (studioDropdownContainer) {
+      studioDropdownContainer.classList.remove("open");
+    }
+  });
 
   // Restore saved email setting
   const savedDefaultEmail = localStorage.getItem("meetingassistant_default_email");
@@ -248,19 +302,39 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 3. AUDIO SOURCE SELECTION
   // ==========================================
-  const sourceCards = [sourceMicCard, sourceSystemCard, sourceFileCard];
-  sourceCards.forEach((card) => {
-    if (!card) return;
-    card.addEventListener("click", () => {
-      sourceCards.forEach((c) => c && c.classList.remove("selected"));
-      card.classList.add("selected");
-      selectedAudioSource = card.getAttribute("data-source");
+  // Handle card select for Speaker / Mic
+  if (sourceMicCard) {
+    sourceMicCard.addEventListener("click", () => {
+      sourceMicCard.classList.add("selected");
+      if (sourceDropdownCard) sourceDropdownCard.classList.remove("selected");
+      selectedAudioSource = "speaker_mic";
+      if (audioSourceDropdown) audioSourceDropdown.value = "";
+      if (fileUploadPanel) fileUploadPanel.style.display = "none";
+    });
+  }
 
+  // Handle dropdown selection for System Audio / File Upload
+  if (audioSourceDropdown) {
+    audioSourceDropdown.addEventListener("change", (e) => {
+      const val = e.target.value;
+      if (!val) return;
+      selectedAudioSource = val;
+      if (sourceMicCard) sourceMicCard.classList.remove("selected");
+      if (sourceDropdownCard) sourceDropdownCard.classList.add("selected");
       if (fileUploadPanel) {
         fileUploadPanel.style.display = selectedAudioSource === "file_upload" ? "block" : "none";
       }
     });
-  });
+
+    // Handle clicking the dropdown card wrapper to trigger select box focus
+    if (sourceDropdownCard) {
+      sourceDropdownCard.addEventListener("click", (e) => {
+        if (e.target !== audioSourceDropdown) {
+          audioSourceDropdown.focus();
+        }
+      });
+    }
+  }
 
   // ==========================================
   // 4. RECORDING & AUDIO CAPTURE CONTROLLER
