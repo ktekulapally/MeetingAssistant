@@ -436,7 +436,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!transcribeRes.ok) {
         let errMsg = "Transcription failed";
-        try { const errJson = await transcribeRes.json(); errMsg = errJson.error || errMsg; } catch {}
+        try { 
+          const errJson = await transcribeRes.json(); 
+          errMsg = errJson.error || errJson.message || errMsg; 
+        } catch {}
         throw new Error(errMsg);
       }
 
@@ -465,7 +468,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!summarizeRes.ok) {
         let errMsg = "Summarization failed";
-        try { const errJson = await summarizeRes.json(); errMsg = errJson.error || errMsg; } catch {}
+        try { 
+          const errJson = await summarizeRes.json(); 
+          errMsg = errJson.error || errJson.message || errMsg; 
+        } catch {}
         throw new Error(errMsg);
       }
 
@@ -725,8 +731,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!emailRes.ok) {
-        const errJson = await emailRes.json();
-        throw new Error(errJson.error || "Email dispatch failed");
+        let errMsg = "Email dispatch failed";
+        try {
+          const errJson = await emailRes.json();
+          errMsg = errJson.error || errJson.message || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
 
       showToast(`Email report delivered to ${recipientEmail}!`, "success");
