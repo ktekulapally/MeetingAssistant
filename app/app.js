@@ -178,12 +178,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.supabaseClient && window.supabaseClient.auth) {
       try {
         const session = (await window.supabaseClient.auth.getSession())?.data?.session;
-        return session?.access_token || "";
+        if (session?.access_token) return session.access_token;
       } catch (e) {
         console.warn("Could not retrieve session token:", e);
       }
     }
-    return "";
+    // Fallback to project anon key so guest users can execute edge functions
+    return window.SUPABASE_ANON_KEY || "";
   }
 
   function updateUserUI() {
