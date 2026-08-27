@@ -560,6 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Step 2: Summarize via Edge Function
       const title = inputMeetingTitle.value.trim() || "Meeting";
       const attendees = inputMeetingAttendees.value.split(",").map(a => a.trim()).filter(Boolean);
+      const selectedModel = localStorage.getItem("ma_ai_model") || "llama-3.3-70b-versatile";
 
       const summarizeRes = await fetch(`${supabaseUrl}/functions/v1/summarize-meeting`, {
         method: "POST",
@@ -570,7 +571,8 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({
           title,
           transcript: rawTranscript,
-          attendees
+          attendees,
+          model: selectedModel
         })
       });
 

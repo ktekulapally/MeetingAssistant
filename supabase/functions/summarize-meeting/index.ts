@@ -28,7 +28,7 @@ serve(async (req) => {
       );
     }
 
-    const { title, transcript, attendees } = await req.json();
+    const { title, transcript, attendees, model } = await req.json();
 
     if (!transcript || transcript.trim().length === 0) {
       return new Response(
@@ -70,14 +70,16 @@ Attendees: ${Array.isArray(attendees) ? attendees.join(', ') : (attendees || 'Te
 Transcript:
 ${transcript}`;
 
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    let activeModel = model || "llama-3.3-70b-versatile";
+
+    let groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${groqApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: activeModel,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -89,11 +91,47 @@ ${transcript}`;
 
     if (!groqRes.ok) {
       const errText = await groqRes.text();
-      console.error("Groq Summarization Error:", errText);
-      return new Response(
-        JSON.stringify({ error: `Groq AI API failed: ${errText}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error(`Groq Summarization Error with model ${activeModel}:`, errText);
+      
+      // Attempt fallback to llama-3.1-70b-versatile if the selected model is not available/authorized
+      let parsedErr;
+      try { parsedErr = JSON.parse(errText); } catch {}
+      
+      if (parsedErr?.error?.code === "model_not_found" && activeModel !== "llama-3.1-70b-versatile") {
+        console.warn(`Falling back from ${activeModel} to llama-3.1-70b-versatile...`);
+        activeModel = "llama-3.1-70b-versatile";
+        
+        groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${groqApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: activeModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            temperature: 0.2,
+            response_format: { type: "json_object" },
+          }),
+        });
+        
+        if (!groqRes.ok) {
+          const secondErrText = await groqRes.text();
+          console.error(`Groq Summarization Error with fallback model ${activeModel}:`, secondErrText);
+          return new Response(
+            JSON.stringify({ error: `Groq AI API failed with fallback: ${secondErrText}` }),
+            { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        return new Response(
+          JSON.stringify({ error: `Groq AI API failed: ${errText}` }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const groqData = await groqRes.json();
