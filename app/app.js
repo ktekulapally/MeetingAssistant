@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const audioFileInput = document.getElementById("audioFileInput");
 
   const timerDisplay = document.getElementById("timerDisplay");
+  const waveformContainer = document.getElementById("waveformContainer");
   const waveformBars = document.querySelectorAll(".waveform-bar");
   const captureStatusBadge = document.getElementById("captureStatusBadge");
   const btnStartRecord = document.getElementById("btnStartRecord");
@@ -402,6 +403,8 @@ document.addEventListener("DOMContentLoaded", () => {
         startSilentAudio();
         await requestWakeLock();
 
+        if (waveformContainer) waveformContainer.classList.add("recording");
+
         await activeAudioCapturer.startRecording(selectedAudioSource, {
           onTick: (elapsedSeconds) => {
             currentRecordingDuration = elapsedSeconds;
@@ -417,6 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Recording error:", err);
         stopSilentAudio();
         releaseWakeLock();
+        if (waveformContainer) waveformContainer.classList.remove("recording");
         updateCaptureStatus("completed", "Ready");
         showToast(err.message || "Failed to start recording", "error");
         resetRecordButtons();
@@ -431,10 +435,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (activeAudioCapturer.isPaused) {
         activeAudioCapturer.resumeRecording();
         btnPauseRecord.innerHTML = "<span>⏸️</span> Pause";
+        if (waveformContainer) waveformContainer.classList.add("recording");
         updateCaptureStatus("recording", "Recording...");
       } else {
         activeAudioCapturer.pauseRecording();
         btnPauseRecord.innerHTML = "<span>▶️</span> Resume";
+        if (waveformContainer) waveformContainer.classList.remove("recording");
         updateCaptureStatus("transcribing", "Paused");
       }
     });
@@ -449,6 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Stop background silent playback and wake lock
         stopSilentAudio();
         releaseWakeLock();
+        if (waveformContainer) waveformContainer.classList.remove("recording");
         const result = await activeAudioCapturer.stopRecording();
         resetRecordButtons();
 
@@ -457,6 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Stop recording error:", err);
         stopSilentAudio();
         releaseWakeLock();
+        if (waveformContainer) waveformContainer.classList.remove("recording");
         showToast(err.message || "Failed to stop recording", "error");
         resetRecordButtons();
         updateCaptureStatus("completed", "Ready");
@@ -468,6 +476,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnStartRecord) btnStartRecord.style.display = "inline-flex";
     if (btnPauseRecord) btnPauseRecord.style.display = "none";
     if (btnStopRecord) btnStopRecord.style.display = "none";
+    if (waveformContainer) waveformContainer.classList.remove("recording");
+    const bars = document.querySelectorAll(".waveform-bar");
+    bars.forEach(bar => {
+      bar.style.height = "8px";
+      bar.classList.remove("active");
+    });
   }
 
   function updateCaptureStatus(statusClass, labelText) {
@@ -485,18 +499,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function animateWaveformBars(frequencies) {
-    waveformBars.forEach((bar, idx) => {
+    const bars = document.querySelectorAll(".waveform-bar");
+    if (!bars || bars.length === 0) return;
+    
+    bars.forEach((bar, idx) => {
       let val = 0;
       if (Array.isArray(frequencies)) {
         val = frequencies[idx] || 0; // Value from 0 to 255
       } else {
-        val = frequencies || 0; // Fallback to single level number
+        val = frequencies || 0;
       }
       
-      // Scale frequency value (0-255) to bar height (8px to 48px)
-      const height = Math.max(8, Math.min(48, Math.round((val / 255) * 40) + 8));
-      bar.style.height = `${height}px`;
-      if (val > 10) {
+      // Scale frequency value (0-255) to bar height (6px to 26px)
+      if (val > 8) {
+        const height = Math.max(6, Math.min(26, Math.round((val / 255) * 20) + 6));
+        bar.style.height = `${height}px`;
         bar.classList.add("active");
       } else {
         bar.classList.remove("active");

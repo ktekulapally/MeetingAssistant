@@ -291,11 +291,11 @@ class AudioCapturer {
       if (!this.isRecording) return;
       this.analyser.getByteFrequencyData(dataArray);
       
-      // Distribute frequency bins evenly across the 10 visualizer bars
+      // Distribute frequency bins evenly across the 16 visualizer bars
       const binCount = this.analyser.frequencyBinCount;
-      const step = Math.max(1, Math.floor(binCount / 10));
+      const step = Math.max(1, Math.floor(binCount / 16));
       const frequencies = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 16; i++) {
         frequencies.push(dataArray[i * step] || 0);
       }
       

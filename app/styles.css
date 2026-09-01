@@ -10,6 +10,7 @@
   --bg-primary: #0b0f19;
   --bg-surface: #111827;
   --bg-surface-elevated: #1f293d;
+  --bg-card: #182234;
   --bg-glass: rgba(17, 24, 39, 0.75);
 
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -279,18 +280,23 @@ body::before {
 .audio-source-selector {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .source-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 10px 12px;
   cursor: pointer;
   text-align: center;
   transition: var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
 }
 
 .source-card:hover {
@@ -301,23 +307,25 @@ body::before {
 .source-card.selected {
   border-color: var(--accent-cyan);
   background: rgba(6, 182, 212, 0.12);
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
 }
 
 .source-icon {
-  font-size: 28px;
-  margin-bottom: 8px;
+  font-size: 20px;
+  margin-bottom: 4px;
 }
 
 .source-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 .source-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 /* Dropdown Source Card Selector Styles */
@@ -325,7 +333,7 @@ body::before {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 10px 12px;
   text-align: center;
   transition: var(--transition-normal);
   display: flex;
@@ -334,6 +342,7 @@ body::before {
   justify-content: center;
   cursor: pointer;
   position: relative;
+  min-height: 80px;
 }
 
 .source-dropdown-card:hover, .source-dropdown-card.selected {
@@ -342,19 +351,19 @@ body::before {
 }
 
 .source-dropdown-card.selected {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
   border-color: var(--accent-cyan);
 }
 
 .source-select {
-  width: 90%;
-  padding: 6px 8px;
+  width: 100%;
+  padding: 4px 6px;
   background: var(--bg-card);
   color: var(--text-main);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  margin-top: 6px;
-  font-size: 12px;
+  margin-top: 4px;
+  font-size: 11px;
   outline: none;
   cursor: pointer;
   text-align: center;
@@ -368,6 +377,7 @@ body::before {
 .tab-dropdown {
   position: relative;
   display: inline-block;
+  z-index: 1001;
 }
 
 .dropdown-toggle {
@@ -385,17 +395,19 @@ body::before {
 .tab-dropdown-menu {
   display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   left: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: #182234;
+  background-color: var(--bg-surface-elevated, #182234);
+  border: 1px solid var(--border-glow);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  min-width: 190px;
-  z-index: 1000;
-  margin-top: 6px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 15px rgba(99, 102, 241, 0.25);
+  min-width: 200px;
+  z-index: 99999;
+  margin-top: 4px;
   overflow: hidden;
   animation: slideDown 0.2s ease;
+  backdrop-filter: blur(20px);
 }
 
 .tab-dropdown:hover .tab-dropdown-menu,
@@ -406,7 +418,7 @@ body::before {
 .tab-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 10px 16px;
   color: var(--text-muted);
   cursor: pointer;
@@ -414,16 +426,17 @@ body::before {
   font-weight: 500;
   transition: var(--transition-normal);
   text-align: left;
+  background: transparent;
 }
 
 .tab-dropdown-item:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.15);
   color: var(--text-main);
 }
 
 .tab-dropdown-item.active {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--primary);
+  background: rgba(99, 102, 241, 0.25);
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -449,18 +462,21 @@ body::before {
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 24px;
+  padding: 12px 16px;
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
 }
 
 .timer-display {
   font-family: var(--font-mono);
-  font-size: 44px;
-  font-weight: 600;
+  font-size: 32px;
+  font-weight: 700;
   color: var(--text-main);
   letter-spacing: 2px;
-  margin: 12px 0;
+  margin: 4px 0 6px 0;
+  line-height: 1.1;
 }
 
 .live-waveform-bar-container {
@@ -468,21 +484,44 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: 48px;
-  margin: 16px 0;
+  height: 28px;
+  margin: 6px 0 2px 0;
+  padding: 0 8px;
 }
 
 .waveform-bar {
   width: 4px;
   height: 8px;
-  background: var(--primary);
-  border-radius: 4px;
-  transition: height 0.1s ease;
+  background: linear-gradient(to top, var(--primary), var(--accent-cyan));
+  border-radius: 3px;
+  transition: height 0.08s ease, background 0.15s ease, opacity 0.2s ease;
+  opacity: 0.35;
+}
+
+/* Active Harmonic Soundwave Animation during Recording */
+.live-waveform-bar-container.recording .waveform-bar {
+  opacity: 1;
+  animation: audioWavePulse 1.2s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i, 1) * 0.08s);
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.35);
 }
 
 .waveform-bar.active {
-  background: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
+  opacity: 1;
+  background: linear-gradient(to top, var(--accent-cyan), #38bdf8);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+@keyframes audioWavePulse {
+  0% {
+    height: 4px;
+  }
+  50% {
+    height: 22px;
+  }
+  100% {
+    height: 8px;
+  }
 }
 
 /* Action Control Buttons */
