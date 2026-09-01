@@ -1,4 +1,4 @@
-const CACHE_NAME = "meetingassistant-v3";
+const CACHE_NAME = "meetingassistant-v4";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   "./doc-exporter.js",
   "./supabase-config.js",
   "./session-guard.js",
+  "./app_banner.png",
   "./manifest.json"
 ];
 

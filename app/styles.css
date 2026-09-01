@@ -104,32 +104,21 @@ body::before {
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
   text-decoration: none;
 }
 
-.brand-icon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  box-shadow: var(--shadow-glow);
+.app-banner-img {
+  height: 48px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  transition: transform var(--transition-fast);
 }
 
-.brand-name {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
-}
-
-.brand-name span {
-  color: var(--accent-cyan);
+.app-banner-img:hover {
+  transform: scale(1.02);
 }
 
 .nav-tabs {
