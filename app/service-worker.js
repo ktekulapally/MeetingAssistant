@@ -1,4 +1,4 @@
-const CACHE_NAME = "meetingassistant-v6";
+const CACHE_NAME = "meetingassistant-v7";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

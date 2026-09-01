@@ -114,8 +114,8 @@ body::before {
 .app-banner-full {
   width: 100%;
   height: auto;
-  max-height: 140px;
-  object-fit: cover;
+  max-width: 100%;
+  object-fit: contain;
   border-radius: var(--radius-md);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.2);
   border: 1px solid var(--border-subtle);
@@ -242,8 +242,9 @@ body::before {
     padding: 8px 10px 0 10px;
   }
   .app-banner-full {
-    max-height: 100px;
-    object-fit: cover;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
   }
   .masthead-container {
     display: flex;
