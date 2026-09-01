@@ -554,13 +554,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const transcribeData = await transcribeRes.json();
       const rawTranscript = transcribeData.transcript || "";
 
-      updateAIStatus(`✅ Transcription Complete (${rawTranscript.length} characters).\n\n🤖 Generating AI Meeting Summary via Groq Llama 3.3...`);
+      updateAIStatus(`✅ Transcription Complete (${rawTranscript.length} characters).\n\n🤖 Generating AI Meeting Summary via Groq AI...`);
       updateCaptureStatus("transcribing", "Summarizing...");
 
       // Step 2: Summarize via Edge Function
       const title = inputMeetingTitle.value.trim() || "Meeting";
       const attendees = inputMeetingAttendees.value.split(",").map(a => a.trim()).filter(Boolean);
-      const selectedModel = localStorage.getItem("ma_ai_model") || "llama-3.3-70b-versatile";
+      const selectedModel = localStorage.getItem("ma_ai_model") || "llama-3.1-8b-instant";
 
       const summarizeRes = await fetch(`${supabaseUrl}/functions/v1/summarize-meeting`, {
         method: "POST",
@@ -883,7 +883,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const savedProvider = localStorage.getItem("ma_ai_provider") || "groq";
     const savedKey = localStorage.getItem("ma_ai_api_key") || "";
-    const savedModel = localStorage.getItem("ma_ai_model") || "llama-3.3-70b-versatile";
+    const savedModel = localStorage.getItem("ma_ai_model") || "llama-3.1-8b-instant";
 
     const providerSelect = document.getElementById("settingActiveProvider");
     const keyInput = document.getElementById("settingCustomApiKey");
@@ -902,7 +902,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modelSelect) {
           modelSelect.innerHTML = "";
           if (provider === "groq") {
-            modelSelect.innerHTML = `<option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (Groq)</option>`;
+            modelSelect.innerHTML = `
+              <option value="llama-3.1-8b-instant" selected>Llama 3.1 8B Instant (Ultra Fast & Recommended)</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B (High Quality)</option>
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B (Fast)</option>
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+            `;
           } else if (provider === "openai") {
             modelSelect.innerHTML = `
               <option value="gpt-4o" selected>GPT-4o (OpenAI)</option>
@@ -938,7 +943,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const provider = providerSelect ? providerSelect.value : "groq";
       const customKey = keyInput ? keyInput.value.trim() : "";
-      const model = modelSelect ? modelSelect.value : "llama-3.3-70b-versatile";
+      const model = modelSelect ? modelSelect.value : "llama-3.1-8b-instant";
 
       localStorage.setItem("ma_ai_provider", provider);
       localStorage.setItem("ma_ai_api_key", customKey);

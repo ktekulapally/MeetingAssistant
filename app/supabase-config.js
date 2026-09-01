@@ -5,7 +5,7 @@
 // across all your devices automatically (similar to Expense-tracker):
 // ================================================================
 const HARDCODED_URL = "https://zmklfmlppceiulaybjga.supabase.co";
-const HARDCODED_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpta2xmbWxwcGNlaXVsYXliamdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDE3MTQsImV4cCI6MjA5ODU3NzcxNH0.XIQPpuEE1QeEcdbubDxd28hfB4dhMbmNy0QIYWkzrGg";
+const HARDCODED_KEY = "";
 
 (function initSupabase() {
   // Use saved credentials from browser localStorage, or fallback to the hardcoded credentials
