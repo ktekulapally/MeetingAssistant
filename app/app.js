@@ -117,109 +117,90 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 1. NAVIGATION & TAB SWITCHING
   // ==========================================
-  if (mainNavTabs) {
-    mainNavTabs.addEventListener("click", (e) => {
-      const studioDropdownToggle = document.getElementById("studioDropdownToggle");
-      const studioDropdownContainer = document.getElementById("studioDropdownContainer");
+  const studioDropdownToggle = document.getElementById("studioDropdownToggle");
+  const studioDropdownContainer = document.getElementById("studioDropdownContainer");
 
-      // 1. Handle clicking the dropdown toggle button itself (Live Studio tab)
-      const dropdownToggle = e.target.closest("#studioDropdownToggle");
-      if (dropdownToggle) {
-        e.stopPropagation();
+  if (studioDropdownToggle) {
+    studioDropdownToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
 
-        // Switch to the currently selected dropdown item's pane if studio tab is not active
-        const isStudioActive = dropdownToggle.classList.contains("active");
-        if (!isStudioActive) {
-          const activeItem = studioDropdownContainer.querySelector(".tab-dropdown-item.active") || 
-                             studioDropdownContainer.querySelector(".tab-dropdown-item");
-          if (activeItem) {
-            const targetTabId = activeItem.getAttribute("data-tab");
+      // Switch to studio tab pane if not active
+      if (!studioDropdownToggle.classList.contains("active")) {
+        const activeItem = studioDropdownContainer ? (studioDropdownContainer.querySelector(".tab-dropdown-item.active") || studioDropdownContainer.querySelector(".tab-dropdown-item")) : null;
+        const targetTabId = activeItem ? activeItem.getAttribute("data-tab") : "tab-studio";
 
-            // Reset all active states
-            document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
-            document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
-            tabPanes.forEach((pane) => pane.classList.remove("active"));
-
-            // Set active states
-            activeItem.classList.add("active");
-            dropdownToggle.classList.add("active");
-            const targetPane = document.getElementById(targetTabId);
-            if (targetPane) targetPane.classList.add("active");
-          }
-        }
-
-        // Toggle the dropdown menu open state
-        if (studioDropdownContainer) {
-          studioDropdownContainer.classList.toggle("open");
-        }
-        return;
-      }
-
-      // 2. Handle clicking a dropdown menu item
-      const dropdownItem = e.target.closest(".tab-dropdown-item");
-      if (dropdownItem) {
-        const targetTabId = dropdownItem.getAttribute("data-tab");
-        const labelText = dropdownItem.getAttribute("data-label");
-        const iconSpan = dropdownItem.querySelector("span").cloneNode(true);
-
-        // Reset all active states
         document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
         document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
         tabPanes.forEach((pane) => pane.classList.remove("active"));
 
-        // Set active states
-        dropdownItem.classList.add("active");
-        const toggleBtn = document.getElementById("studioDropdownToggle");
-        const labelEl = document.getElementById("studioTabLabel");
-        if (toggleBtn) toggleBtn.classList.add("active");
-        
-        if (labelEl && toggleBtn) {
-          labelEl.textContent = labelText;
-          const toggleIcon = toggleBtn.querySelector("span");
-          if (toggleIcon) toggleBtn.replaceChild(iconSpan, toggleIcon);
-        }
-
+        if (activeItem) activeItem.classList.add("active");
+        studioDropdownToggle.classList.add("active");
         const targetPane = document.getElementById(targetTabId);
         if (targetPane) targetPane.classList.add("active");
-
-        // Close menu
-        if (studioDropdownContainer) {
-          studioDropdownContainer.classList.remove("open");
-        }
-        return;
       }
 
-      // 3. Handle clicking a standard tab or settings icon tab
-      const tabBtn = e.target.closest(".tab-btn");
-      if (tabBtn) {
-        const targetTabId = tabBtn.getAttribute("data-tab");
-
-        // Reset all active states
-        document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
-        document.querySelectorAll(".tab-dropdown-item").forEach((item) => item.classList.remove("active"));
-        tabPanes.forEach((pane) => pane.classList.remove("active"));
-
-        // Set active states
-        tabBtn.classList.add("active");
-        const targetPane = document.getElementById(targetTabId);
-        if (targetPane) targetPane.classList.add("active");
-
-        if (targetTabId === "tab-history") {
-          fetchMeetingHistory();
-        }
-        
-        // Close studio dropdown menu
-        if (studioDropdownContainer) {
-          studioDropdownContainer.classList.remove("open");
-        }
+      // Toggle dropdown open state
+      if (studioDropdownContainer) {
+        studioDropdownContainer.classList.toggle("open");
       }
     });
   }
 
-  // Dismiss dropdown when clicking elsewhere
-  window.addEventListener("click", () => {
-    const studioDropdownContainer = document.getElementById("studioDropdownContainer");
-    if (studioDropdownContainer) {
+  // Handle clicking dropdown menu items
+  document.querySelectorAll(".tab-dropdown-item").forEach((item) => {
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const targetTabId = item.getAttribute("data-tab");
+      const labelText = item.getAttribute("data-label");
+      const iconSpan = item.querySelector("span") ? item.querySelector("span").cloneNode(true) : null;
+
+      document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-dropdown-item").forEach((it) => it.classList.remove("active"));
+      tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+      item.classList.add("active");
+      if (studioDropdownToggle) studioDropdownToggle.classList.add("active");
+      const labelEl = document.getElementById("studioTabLabel");
+      if (labelEl) labelEl.textContent = labelText;
+      const toggleIcon = studioDropdownToggle ? studioDropdownToggle.querySelector("span") : null;
+      if (toggleIcon && iconSpan) studioDropdownToggle.replaceChild(iconSpan, toggleIcon);
+
+      const targetPane = document.getElementById(targetTabId);
+      if (targetPane) targetPane.classList.add("active");
+
+      if (studioDropdownContainer) {
+        studioDropdownContainer.classList.remove("open");
+      }
+    });
+  });
+
+  // Handle clicking standard tabs or icon tabs (Meeting Minutes, Settings)
+  document.querySelectorAll(".tab-btn:not(#studioDropdownToggle)").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const targetTabId = btn.getAttribute("data-tab");
+      if (!targetTabId) return;
+
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-dropdown-item").forEach((it) => it.classList.remove("active"));
+      tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+      btn.classList.add("active");
+      const targetPane = document.getElementById(targetTabId);
+      if (targetPane) targetPane.classList.add("active");
+
+      if (targetTabId === "tab-history") {
+        fetchMeetingHistory();
+      }
+
+      if (studioDropdownContainer) {
+        studioDropdownContainer.classList.remove("open");
+      }
+    });
+  });
+
+  // Dismiss dropdown only when clicking outside
+  document.addEventListener("click", (e) => {
+    if (studioDropdownContainer && !studioDropdownContainer.contains(e.target)) {
       studioDropdownContainer.classList.remove("open");
     }
   });
