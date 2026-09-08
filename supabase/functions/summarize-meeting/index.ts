@@ -41,7 +41,7 @@ serve(async (req) => {
 Analyze the provided meeting transcript and return a structured JSON response strictly adhering to this JSON schema:
 
 {
-  "summary": "Concise 3-5 sentence executive summary of the meeting, capturing the core objective and overall outcome.",
+  "summary": "Concise 3-8 sentence executive summary of the meeting, capturing the core objective and overall outcome.",
   "key_takeaways": [
     "Key decision or insight 1",
     "Key decision or insight 2"
@@ -62,7 +62,7 @@ Analyze the provided meeting transcript and return a structured JSON response st
   ]
 }
 
-Ensure high accuracy, professionalism, and actionable detail. Respond ONLY with valid JSON.`;
+Ensure high accuracy, professionalism,Task oriented and actionable detail. Respond ONLY with valid JSON.`;
 
     const userPrompt = `Meeting Title: ${title || 'General Meeting'}
 Attendees: ${Array.isArray(attendees) ? attendees.join(', ') : (attendees || 'Team Members')}
