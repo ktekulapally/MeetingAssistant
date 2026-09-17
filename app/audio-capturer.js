@@ -23,30 +23,54 @@ class MicSpeakerAdapter extends AudioStreamAdapter {
   }
 
   async initialize() {
+    const requestUserMedia = async (constraints) => {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      }
+      const legacyGetUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+      if (legacyGetUserMedia) {
+        return new Promise((resolve, reject) => {
+          legacyGetUserMedia.call(navigator, constraints, resolve, reject);
+        });
+      }
+      throw new Error("Your browser does not support audio recording. Please use modern Chrome, Edge, Safari, or Firefox.");
+    };
+
     try {
-      // Try with optimal constraints first
-      this.stream = await navigator.mediaDevices.getUserMedia({
+      // 1. Try with mobile-friendly standard constraints (without hardcoded sampleRate which fails on some Android devices)
+      this.stream = await requestUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 44100
+          autoGainControl: true
         },
         video: false
       });
       return this.stream;
     } catch (err) {
-      console.warn("Optimal microphone access failed, retrying with basic constraints...", err);
+      console.warn("Primary microphone access failed, retrying with basic constraints...", err);
       try {
-        // Fallback retry using bare minimum audio constraints
-        this.stream = await navigator.mediaDevices.getUserMedia({
+        // 2. Fallback retry using bare minimum audio constraints
+        this.stream = await requestUserMedia({
           audio: true,
           video: false
         });
         return this.stream;
       } catch (retryErr) {
         console.error("MicSpeakerAdapter failed to access microphone completely:", retryErr);
-        throw new Error("Could not access microphone/speaker acoustics. Please check browser permissions, verify your microphone is plugged in, and ensure it is not used by another app.");
+        const errName = (retryErr && retryErr.name) || (err && err.name) || "";
+        
+        if (errName === "NotAllowedError" || errName === "PermissionDeniedError" || errName === "SecurityError") {
+          throw new Error("Microphone permission is blocked. Please tap the lock/tune icon near the address bar in Chrome, select Permissions > Microphone, and choose 'Allow'. Also verify Android Settings > Apps > Chrome > Permissions > Microphone is allowed.");
+        } else if (errName === "NotFoundError" || errName === "DevicesNotFoundError") {
+          throw new Error("No microphone detected. Please plug in or connect a microphone/headset to this device.");
+        } else if (errName === "NotReadableError" || errName === "TrackStartError") {
+          throw new Error("Microphone is currently in use by another app (e.g. phone call, voice recorder, or video call). Please close other recording apps and retry.");
+        } else if (errName === "OverconstrainedError") {
+          throw new Error("The requested audio settings are not supported by your microphone hardware.");
+        } else {
+          throw new Error(retryErr.message || "Could not access microphone acoustics. Please check browser permissions and ensure microphone is enabled.");
+        }
       }
     }
   }
@@ -205,6 +229,9 @@ class AudioCapturer {
     // Setup Web Audio API Analyser for Visualizer
     try {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.audioContext.state === "suspended") {
+        await this.audioContext.resume();
+      }
       const sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 64;
